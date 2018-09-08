@@ -1,0 +1,122 @@
+---
+title: "Meta Analysis"
+author: "Caspar J. van Lissa"
+date: "September 8, 2018"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(metaforest)
+library(caret)
+
+analyzedat <- readRDS("analyzedat_imputed.RData")
+
+nicetext <- function(x, digits = 2){
+  if(x%%1==0){
+    formatC(x, digits = 0, format = "f")
+  } else {
+    formatC(x, digits = digits, format = "f")
+  }
+}
+
+```
+
+## R Markdown
+
+A preliminary search on Web of Science yielded 4991 articles, of which 92 met our inclusion criteria. 
+
+A librarian wrote syntax for Web of Science, PsychInfo, and ERIC, based on meta-data from our selected articles
+
+This resulted in 2194 relevant records. Removal of duplicates left 1786 abstracts to evaluate. 
+
+This yielded 52 new articles, resulting in a total of 144.
+
+Of these, `r max(analyzedat$id_study)` reported sufficient statistical information to compute a total of `r nrow(analyzedat)` effect sizes.
+
+## Sample 2
+
+Observed effect sizes ranged from `r nicetext(range(analyzedat[["es_correlation"]])[1])` to `r nicetext(range(analyzedat[["es_correlation"]])[2])` ($M_r = `r nicetext(mean(analyzedat[["es_correlation"]]))`$, $SD = `r nicetext(sd(analyzedat[["es_correlation"]]))`$). 
+
+Sample sizes ranged from `r min(analyzedat[["es_n"]])` to `r max(analyzedat[["es_n"]])` participants 
+ ($M_n = `r nicetext(mean(analyzedat[["es_n"]]))`$, $SD = `r nicetext(sd(analyzedat[["es_n"]]))`$). Several studies reported multiple effect sizes (`r min(table(analyzedat[["id_study"]]))` to `r max(table(analyzedat[["id_study"]]))`, with most reporting `r names(table(table(analyzedat$id_study)))[which.max(table(table(analyzedat$id_study)))]`
+effect size).
+
+
+## Standard meta-analysis
+
+```{r metafor_analysis, include=FALSE}
+if(FALSE){
+  effect_sizes <- escalc(ri = analyzedat$es_correlation, ni = analyzedat$es_n, measure = "COR")
+  
+  analyzedat <- analyzedat[, -match(c("es_correlation", "es_n"), names(analyzedat))]
+  analyzedat$yi <- as.numeric(effect_sizes$yi)
+  analyzedat$vi <- as.numeric(effect_sizes$vi)
+  
+  #Conduct meta-analyses
+  model.full <- rma.mv(yi, vi, random = list(~ 1 | id_study, ~ 1 | id_row), data=analyzedat) 
+  model.within_null <- rma.mv(yi, vi, random = list(~ 1 | id_study, ~ 1 | id_row), sigma2=c(NA,0), data=analyzedat) 
+  model.between_null <- rma.mv(yi, vi, random = list(~ 1 | id_study, ~ 1 | id_row), sigma2=c(0,NA), data=analyzedat) 
+  model.both_null <- rma.mv(yi, vi, random = list(~ 1 | id_study, ~ 1 | id_row), sigma2=c(0,0), data=analyzedat) 
+  
+  aov_within <- anova(model.full,model.within_null) 
+  aov_between <- anova(model.full,model.between_null) 
+  aov_bothnull <- anova(model.full,model.both_null) 
+  aov_table <- rbind(
+  c(df=aov_between$p.f, aov_between$fit.stats.f[c(3:4, 1)], LRT = NA, p = NA),
+  c(df=aov_within$p.r, aov_within$fit.stats.r[c(3:4, 1)], LRT = aov_within$LRT, p = aov_within$pval),
+  c(df=aov_between$p.r, aov_between$fit.stats.r[c(3:4, 1)], LRT = aov_between$LRT, p = aov_between$pval),
+  c(df=aov_bothnull$p.r, aov_bothnull$fit.stats.r[c(3:4, 1)], LRT = aov_bothnull$LRT, p = aov_bothnull$pval)
+  )
+  rownames(aov_table) <- c("Three-level model", "Within-studies variance constrained", "Between-studies variance constrained", "Both variance components constrained")
+  aov_table[,-c(1,6)] <- formatC(aov_table[,-c(1,6)], digits = 2, format = "f")
+  aov_table[,6] <- formatC(as.numeric(aov_table[,6]), digits = 3, format = "f")
+  aov_table[1, 5:6] <-""
+  write.csv(aov_table, "table_variance_components.csv")
+  confints <- confint(model.full)
+  save(model.full, aov_table, confints, analyzedat, file = "metafor_results.RData")
+}
+load("metafor_results.RData")
+#CHeck convergence of variance components:
+#par(mfrow=c(2,1))
+#plot.profile1 <- profile(model.full, sigma2=1)
+#plot.profile2 <- profile(model.full, sigma2=2)
+
+#Write forest plot to file
+#png(file="forest_plot.png",width=210,height=297, units="mm", res = 300)
+#forest(model.full, xlim = c(-5.5,4), alim = c(-1, 2), xlab="Effect size (Cohen's d)", mlab="Overall estimate: ", slab = data$study, ilab=data$outcomedv,
+#       ilab.xpos=c(-2), ilab.pos = c(4), cex = 0.75)
+#par(cex=0.75, font=2)
+#text(c(-5.5, -2.01, 2.54), 58, c("Study", "Outcome", "Cohen's d"), pos = 4)
+#dev.off()
+
+#library(extrafont)
+#loadfonts()
+#cairo_pdf("forest_plot.pdf", family="Helvetica", width = 8.27,height = 11.69)
+#forest(model.full, xlim = c(-5.5,4), alim = c(-1, 2), xlab="Effect size (Cohen's d)", mlab="Overall estimate: ", slab = data$study, ilab=data$outcomedv, ilab.xpos=c(-2), ilab.pos = c(4,4,4), cex = 0.75)
+#par(cex=0.75, font=2)
+#text(c(-5.5, -2.01, 2.54), 58, c("Study", "Outcome", "Cohen's d"), pos = c(4,4,4))
+#dev.off()
+#embed_fonts("forest_plot.pdf", outfile="forest_plot.pdf")
+
+```
+
+```{r publication_bias, echo=FALSE, include=FALSE}
+
+beggs <- regtest(x = analyzedat$yi, vi = analyzedat$vi, predictor = "vi")
+beggs
+
+
+#file drawer analysis (fail and safe)
+fsn <- fsn(yi = analyzedat$yi, vi = analyzedat$vi, 
+           #data = , 
+           #subset = c(domain, hit2Grouped), 
+           )
+```
+
+## Slide with Bullets
+
+```{r funnel_plot, echo=FALSE, fig.cap="A caption", out.width = '100%'}
+funnel(model.full, xlab = "Residual Value", back = "white") #funnel plot for qualitative evaluation publication bias
+```

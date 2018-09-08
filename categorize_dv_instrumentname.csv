@@ -1,0 +1,60 @@
+Original,Category,Freq
+" CELF–P (Wigg et al., 1992)",Other,4
+"35 items across the following domains; phonological awareness, letter sound knowledge, letter recognition, print conventions, and word recognition (NCES, 2008).",Other,2
+"ALLU; Lindeman, 1998",ALLU,16
+"ARMI; Lerkkanen, Poikkeus, & Ketonen, 2006",ARMI,16
+"average number of morphemes per utterance Pancsofar & Vernon-Feagans, 2006; Rowe et al., 2004",Other,3
+"Bayley Scales of Infant Development III (Bayley, 2006).",Bayley,2
+"Brigance Early Development Inventory II; Language skills (Brigance, 2004); translated by (Aral, Baran, Gürsoy, Köksal Akyol, Bütün Ayhan, & Yildiz Biçakçi, 2008)",Other,2
+"CHAT conventions of the Child Language Data Exchange System (CHILDES; MacWhinney, ????).",CHILDES,36
+"Child Language Data Exchange System (CHILDES) format (MacWhinney, 2000)",CHILDES,3
+Codes for the Analysis of Human Language (CHAT),CHILDES,3
+father and child language measures were generated using Miller and Iglesias (2012) Systematic Analysis of Language Transcript (SALT) program,SALT,36
+"Fluharty Speech and Language Screening for Children (Fluharty, 1974)",Other,8
+"Four alphabetic tasks: word writing, letter naming, initial phoneme retrieval and final phoneme retrieval (Aram & Levin, 2002; Aram, Most & Mayafit, 2006)",Other,7
+"French version of the MacArthur Communicative Development Inventory (MCDI; Fenson et al., 2007).1 Parents completed the Mots et Gestes form at 15 months (words and gestures; Trudeau, Frank, & Poulin- Dubois, 1997)",McArthur,24
+"Interactions transcribed using the conventions of the Child Language Data Exchange System, MacWhinney B. The CHILDES Project: Tools for Analyzing Talk. Mahwah, NJ: Lawrence Erlbaum Associates; 2006",CHILDES,2
+"Interactions transcribed using the conventions of the Child Language Data Exchange System, MacWhinney B. The CHILDES Project: Tools for Analyzing Talk. Mahwah, NJ: Lawrence Erlbaum Associates; 2007",CHILDES,2
+"Interactions transcribed using the conventions of the Child Language Data Exchange System, MacWhinney B. The CHILDES Project: Tools for Analyzing Talk. Mahwah, NJ: Lawrence Erlbaum Associates; 2008",CHILDES,2
+"Interactions transcribed using the conventions of the Child Language Data Exchange System, MacWhinney B. The CHILDES Project: Tools for Analyzing Talk. Mahwah, NJ: Lawrence Erlbaum Associates; 2009",CHILDES,2
+"Interactions transcribed using the conventions of the Child Language Data Exchange System, MacWhinney B. The CHILDES Project: Tools for Analyzing Talk. Mahwah, NJ: Lawrence Erlbaum Associates; 2010",CHILDES,2
+"Interactions transcribed using the conventions of the Child Language Data Exchange System, MacWhinney B. The CHILDES Project: Tools for Analyzing Talk. Mahwah, NJ: Lawrence Erlbaum Associates; 2011",CHILDES,2
+"IRT-based letter knowledge score (Bowles, Pentimonti, Gerde, & Montroy, 2013).",Other,1
+"letter-word identification subscale of the Woodcock-Johnson III Test of Achievement (Woodcock, McGrew, & Mather, 2001)",Woodcock,1
+"MacArthur Communication Developmental Inventories (CDI) for Infants and Toddlers, Fenson et al., 1994",McArthur,6
+"MacArthur Communicative Development Inventories: Words and Gestures (the Infant COl) and Words and Sentences (The Toddler COl) (Fenson et aI., 1994) adapted into Finnish (Lyytinen et al., 1996)",McArthur,5
+"MacArthur Communicative Development Inventory (MCDI) (Fenson, Dale, Reznick, Thal, et al., 1991). Parents indicate which of the listed words the child uses and report on the complexity of the child’s language (e.g., word endings and length of utterance). ",McArthur,2
+"MacArthur Communicative Development Inventory (MCDI), Fenson et al., 1993",McArthur,14
+McArthur-Bates Communicative Development Inventory (CDI). No reference is provided. ,McArthur,6
+"number of different words used; Systematic Analysis of Language Transcripts (SALT) software; Miller & Chapman, 1998",SALT,4
+"number of unique words (i.e. types) by the number of total words (i.e. tokens); Systematic Analysis of Language Transcripts (SALT) software; Miller & Chapman, 1998",SALT,4
+"number of words used; Systematic Analysis of Language Transcripts (SALT) software; Miller & Chapman, 1998",SALT,4
+"Peabody Picture Vocabulary Test-III (Dunn & Dunn, 1997)",PPVT,1
+"Peabody Picture Vocabulary Test-III (PPVT-III; Dunn & Dunn, 1997)",PPVT,4
+"Peabody Picture Vocabulary Test-Third Edition (Dutch Version). Dunn LM, Dunn LM. Peabody picture vocabulary test third edition (PPVT-III-NL). Dutch version by L. Schlichting Amsterdam: Harcourt Test Publishers; 2004.
+",PPVT,2
+"Peabody Picture Vocabulary Test—III (PPVT–III; Dunn & Dunn, 1997) Goldman, Stein & Guerry, 1983",PPVT,1
+"Peabody Picture Vocabulary Test – Third Edition (PPVT-III; Dunn & Dunn, 1997)",PPVT,3
+"PPVT-4 (Dunn & Dunn, 2007)",PPVT,1
+"PPVT-III (Dunn & Dunn, 1997)",PPVT,2
+"PPVT– III or TVIP (Spanish version where relevant) were administered at 36 months (Dunn & Dunn, 1997)",PPVT,12
+"Preschool language assessment instrument (PLAI; Blank, Rose & Berlin, 1978)",PLAI,32
+"Preschool Language Scale Fourth Edition (PLS-4; Zimmerman, Steiner, & Pond, 2002",PLS,2
+"RDLS. Reynell, J. (1990). Reynell developmental language scales (U.S. edition). LA, CA:Western Psychological Services",Reynell,10
+"Receptive Communication Age, from the Sequenced Inventory of Communication Development-Revised (SICD-R) (Hedrick, Prather, & Tobin, 1984): awareness, discrimination, and understanding. parent-report and direct observation",SICD,1
+"Reynell Developmental Language Scale (RDLS), Reynell, 1990; Siegel, 1982",Reynell,6
+"Reynell Developmental Language Scale (Reynell & Gruber, 1990)",Reynell,1
+"Reynell Developmental Language Scales, revised (Reynell 1981) and the Language Interview (Bates, Bretherton & Snyder 1988).",Reynell,4
+"Sequenced Inventory of Communication Development-Revised (SICD-R; Hedrick et al., 1984",SICD,5
+"Sequenced Inventory of Communication Development (SICD; Hedrick, Prather, & Tobin, 1975)",SICD,16
+"Systematic Analysis of Language Transcripts (SALT) software; Miller & Chapman, 1998",CHILDES,4
+"The Bayley Scales ofInfant Development-II (Bayley, 1993 sum score of two expressive language items (naming pictures and objects in line with Siegel , Cooper, Fitzhardinge, and Ash (1995)",Bayley,1
+"The Finnish version (Lyytinen, 1999) of the MacArthur Communicative Development Inventory. Fenson, L., Dale, P., Reznick, J., Thal, D., Bates, E., Hartung, J., et al. (1991)",McArthur,12
+The Peabody Picture Vocabulary Test – Revised (Dunn et al. 1959),PPVT,2
+"the Peabody Picture Vocabulary Test (PPVT) (Dunn and Dunn, 1981)",PPVT,1
+"The preschool reading assessment was composed of items assessing children’s basic skills (80%) and vocabulary (20%)assessments was guided by a framework provided by Brush, Salinger, Sussman, and Kirshstein (2003).",Other,5
+"Vineland Adaptive Scales Survey Form (Sparrow, et al, 1984)",Other,3
+"Wechsler Intelligence Scale for Children–Third Edition (WISC–III: Wechsler, 1991) verbal IQ",WISC,1
+"Woodcock Johnsons III Test of Achievement, McGrew & Woodcock, 2001",Woodcock,4
+"Words and Sentences short-form of the Macarthur-Bates Communicative Developmental Inventories (MCDI; (Fenson, Pethick, Renda, Cox, Dale & Reznick, ????)",McArthur,18
+"Zimmerman Preschool Language Scale (PLS);  (Zimmerman, Steiner, & Pond, 1979)",PLS,2
