@@ -18,7 +18,7 @@ affiliation:
 date: "September 8, 2018"
 
 knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs") })    
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs", output_file = "index.html") })    
 
 output:
   ioslides_presentation:

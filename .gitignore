@@ -2,7 +2,6 @@
 binary/
 .RData
 .Rhistory
-*.html
 *.log
 *.tex
 *.RData
