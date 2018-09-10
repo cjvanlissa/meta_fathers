@@ -1,8 +1,9 @@
 .Rproj.user/
+binary/
 .RData
 .Rhistory
 *.html
 *.log
 *.tex
-
-          
+*.RData
+!metafor_results.RData

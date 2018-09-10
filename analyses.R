@@ -12,7 +12,7 @@ r_from_means <- function(m1, m2, n1, n2, sd1, sd2){
   d/sqrt(d^2+a)
 }
 
-
+set.seed(232)
 data <- read.csv("Copy of 06-09-18_final_dataset2.csv", stringsAsFactors = FALSE)
 
 # Drop empty columns added by Excel
@@ -235,7 +235,7 @@ analyzedat <- analyzedat[order(analyzedat$id_study), ]
 analyzedat$id_row <- 1:nrow(analyzedat)
 
 # Remove variables no longer needed (e.g., only used for checks and computations)
-drop_redundant <- c("sc_id", "sc_id_sample", "sc_id_effectsize", "sc_authors", "sc_title", "sa_larger_study",
+drop_redundant <- c("sc_id", "sc_id_sample", "sc_id_effectsize", "sc_title", "sa_larger_study",
                     "sa_educationlevel_f", "sa_p_low_edu",
                   "sa_income_f", "sa_p_low_income", "sa_ses_f", "sa_p_low_ses",
                   "sa_income_family", "sa_p_low_income_family", "sa_ses_family", "iv_type",
@@ -251,9 +251,9 @@ analyzedat[categorical_vars] <- lapply(analyzedat[categorical_vars], as.factor)
 
 library(missForest)
 
-impute_data <- missForest(analyzedat[, -match(c("id_study", "id_row"), names(analyzedat))], variablewise = TRUE)
+impute_data <- missForest(analyzedat[, -match(c("id_study", "id_row", "sc_authors"), names(analyzedat))], variablewise = TRUE)
 impute_data$OOBerror
 
-analyzedat_imputed <- data.frame(analyzedat[, match(c("id_study", "id_row"), names(analyzedat))], impute_data$ximp)
+analyzedat_imputed <- data.frame(analyzedat[, match(c("id_study", "id_row", "sc_authors"), names(analyzedat))], impute_data$ximp)
 
-saveRDS(analyzedat_imputed, "analyzedat_imputed.RData")
+write.csv(analyzedat_imputed, "imputed_data.csv", row.names = FALSE)

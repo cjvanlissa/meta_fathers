@@ -1,59 +1,226 @@
 ---
-title: "Meta Analysis"
-author: "Caspar J. van Lissa"
+title: "Fathers' involvement in children's language development: A meta-analysis"
+author: 
+  - name          : "Caspar J. van Lissa"
+    affiliation   : "1"
+  - name          : "Nicole Lucassen"
+    affiliation   : "2"
+  - name          : "Renske Keizer"
+    affiliation   : "3"
+
+affiliation:
+  - id            : "1"
+    institution   : "Utrecht University, NL; Methods & Statistics"
+  - id            : "2"
+    institution   : "Erasmus University Rotterdam, NL; Pedagogics"
+  - id            : "3"
+    institution   : "Erasmus University Rotterdam, NL; Family Sociology"
 date: "September 8, 2018"
-output: ioslides_presentation
+
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs") })    
+
+output:
+  ioslides_presentation:
+    transition: slower
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
+#author: 
+#- Caspar J. van Lissa
+#- Nicole Lucassen
+#- Renske Keizer
+
+run_everything <- FALSE
+
+if(!run_everything){
+  render_graphics <- FALSE
+  run_metafor <- FALSE
+  run_recursive_metaforest <- FALSE
+  run_metaforest <- FALSE
+} else {
+  render_graphics <- FALSE
+  run_metafor <- FALSE
+  run_recursive_metaforest <- FALSE
+  run_metaforest <- FALSE
+}
+
+
+library(knitr)
+library(kableExtra)
 library(metaforest)
 library(caret)
+library(plotly)
 
-analyzedat <- readRDS("analyzedat_imputed.RData")
+# Prep data and authors text labels
+analyzedat <- read.csv("imputed_data.csv")
+numeric_vars <- c("sc_impact_factor_that_year", "sa_data_year", "sa_approached_participated", "sa_began_finished", "sa_p_male", "sa_p_single_parent", "sa_p_hispanic_f", "sa_p_black_f", "sa_p_asian_f", "sa_p_otherethnic_f", "sa_p_low_ses_family", "sa_p_bilingual", "sa_p_bio", "sa_p_intact", "sa_p_firstborn", "es_controls", "es_correlation", "id_study", "iv_reliability", "dv_timelag", "dv_reliability", "sa_age_m_iv", "sa_age_sd_iv", "sa_age_m_dv", "sa_age_sd_dv", "sa_age_m_f", "sa_age_sd_f", "sc_pub_year", "es_n", "id_row")
+categorical_vars <- c("es_reverse_coded", "es_partial", "sc_pub_type", "sa_random", "sa_bias_demographics", "sa_bias_involvement", "sa_bias_language", "sa_country", "sa_pop_dens", "sa_mother", "iv_assessment", "iv_location", "iv_informant", "dv_type", "dv_assessment", "dv_location", "dv_informant", "es_type", "iv_type_cat", "dv_instrumentname_cat", "sa_larger_study_cat", "de_experiment", "de_longitudinal", "de_manipulation", "de_larger_study", "iv_qualitative", "iv_researcher_present", "iv_recording", "iv_validity", "dv_researcher_present", "dv_recording", "dv_validity")
 
+analyzedat[numeric_vars] <- lapply(analyzedat[numeric_vars], as.numeric)
+analyzedat[categorical_vars] <- lapply(analyzedat[categorical_vars], as.factor)
+
+authors <- paste(analyzedat$sc_authors, analyzedat$sc_pub_year, sep = ", ")
+analyzedat <- analyzedat[, -match("sc_authors", names(analyzedat))]
+effect_sizes <- escalc(ri = analyzedat$es_correlation, ni = analyzedat$es_n, measure = "COR")
+analyzedat$yi <- as.numeric(effect_sizes$yi)
+analyzedat$vi <- as.numeric(effect_sizes$vi)
+
+# Function for formatting stats
 nicetext <- function(x, digits = 2){
   if(x%%1==0){
     formatC(x, digits = 0, format = "f")
   } else {
-    formatC(x, digits = digits, format = "f")
+    if(abs(x) <  10^-digits){
+      paste0("< ", 10^-digits)
+    } else {
+      formatC(x, digits = digits, format = "f")
+    }
   }
 }
 
+# Function to calculate I2
+calc_i2 <- function(x) {
+  W <- diag(1 / x$vi)
+  X <- model.matrix(x)
+  P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
+  outval <- 100 * x$sigma2 / (sum(x$sigma2) + (x$k - x$p) / sum(diag(P)))
+  outval <-  c(I2 = (100 * sum(x$sigma2) / (sum(x$sigma2) + (x$k - x$p) / sum(
+    diag(P)))), outval)
+  names(outval)[c(2, 3)] <- c("Between cluster", "Within cluster")
+  outval
+}
+
+# Function for interactive funnel plot
+funnel_plotlyfi <- function(x, labels = NULL) {
+  tau2 <- x$tau2
+  weights <- 1 / (x$vi + tau2)
+  
+  estimate = x$b[1]
+  se <- x$se
+  
+  ses <- sqrt(x$vi)
+  
+  se.seq = seq(0, max(ses), 0.001)
+  
+  #Compute vectors of the lower-limit and upper limit values for
+  #the 95% CI region
+  ll95 = estimate - (1.96 * se.seq)
+  ul95 = estimate + (1.96 * se.seq)
+  
+  #Do this for a 99% CI region too
+  ll99 = estimate - (3.29 * se.seq)
+  ul99 = estimate + (3.29 * se.seq)
+  
+  #Confidence interval for summary effect size
+  meanll95 = estimate - (1.96 * se)
+  meanul95 = estimate + (1.96 * se)
+  
+  dfCI = data.frame(ll95, ul95, ll99, ul99, se.seq, estimate, meanll95, meanul95)
+  dat <-
+    data.frame(
+      se = ses,
+      R = x$yi,
+      weights = weights / sum(weights),
+      label = labels
+    )
+  
+  #Draw Plot
+  fp = ggplot(aes(x = R, y = se), data = dat) +
+    geom_point(aes(
+      x = R,
+      y = se,
+      size = weights,
+      text = label
+    ), shape = 1) +
+    ylab('Standard Error') + xlab('R') +
+    geom_line(aes(x = ll95, y = se.seq), linetype = 'dotted', data = dfCI) +
+    geom_line(aes(x = ul95, y = se.seq), linetype = 'dotted', data = dfCI) +
+    geom_line(aes(x = ll99, y = se.seq), linetype = 'dashed', data = dfCI) +
+    geom_line(aes(x = ul99, y = se.seq), linetype = 'dashed', data = dfCI) +
+    geom_segment(aes(
+      x = meanll95,
+      y = min(se.seq),
+      xend = meanll95,
+      yend = max(se.seq)
+    ), data = dfCI) +
+    geom_segment(aes(
+      x = meanul95,
+      y = min(se.seq),
+      xend = meanul95,
+      yend = max(se.seq)
+    ), data = dfCI) +
+    scale_y_continuous(trans = "reverse",
+                       limits = c(max(dat$se), 0),
+                       expand = c(0, 0)) +
+    scale_x_continuous(breaks = seq(-1.25, 2, 0.25)) +
+    guides(size = FALSE) +
+    theme_bw()
+
+  ggplotly(fp, tooltip = "text") %>% config(displayModeBar = F)
+}
+
+
+
 ```
 
-## R Markdown
+## Introduction
 
-A preliminary search on Web of Science yielded 4991 articles, of which 92 met our inclusion criteria. 
+Fathers play unique role in children's language development<font size="2">  
+([Cabrera & Tamis-LeMonda, 2013](https://books.google.nl/books?hl=en&lr=&id=Xx-abFyPtg8C&oi=fnd&pg=PR1&dq=Cabrera+%26+Tamis-LeMonda,+2013&ots=3migj0STnv&sig=Apy1_13WSyQMw2J0plIdlzlLmuY#v=onepage&q=Cabrera%20%26%20Tamis-LeMonda%2C%202013&f=false); [Varghese & Wachen, 2016](https://doi.org/10.1080/01494929.2015.1099587))</font>
 
-A librarian wrote syntax for Web of Science, PsychInfo, and ERIC, based on meta-data from our selected articles
+They use more varied/challenging language than mothers<font size="2">  
+([Tamis-LeMonda, Baumwell, & Cristofaro, 2012](https://doi.org/10.1177/0142723711419321))</font>
 
-This resulted in 2194 relevant records. Removal of duplicates left 1786 abstracts to evaluate. 
+This expands children's vocabulary<font size="2">  
+([Pancsofar & Vernon-Feagans, 2010](https://doi.org/10.1016/j.ecresq.2010.02.001); [Rowe, Coker, & Pan, 2004](https://doi.org/10.1111/j.1467-9507.2004.000267.x))</font>
 
-This yielded 52 new articles, resulting in a total of 144.
+Latest meta-analysis covered studies until 2008<font size="2">  
+([McWayne, Downer, Campos, & Harris, 2013](https://doi.org/10.1080/10409289.2013.746932))</font>
 
-Of these, `r max(analyzedat$id_study)` reported sufficient statistical information to compute a total of `r nrow(analyzedat)` effect sizes.
+* Average correlation of .08 (5 effect sizes)
 
-## Sample 2
+Recently: burgeoning interest in fatherhood
 
-Observed effect sizes ranged from `r nicetext(range(analyzedat[["es_correlation"]])[1])` to `r nicetext(range(analyzedat[["es_correlation"]])[2])` ($M_r = `r nicetext(mean(analyzedat[["es_correlation"]]))`$, $SD = `r nicetext(sd(analyzedat[["es_correlation"]]))`$). 
+Time to update this estimate!
 
-Sample sizes ranged from `r min(analyzedat[["es_n"]])` to `r max(analyzedat[["es_n"]])` participants 
- ($M_n = `r nicetext(mean(analyzedat[["es_n"]]))`$, $SD = `r nicetext(sd(analyzedat[["es_n"]]))`$). Several studies reported multiple effect sizes (`r min(table(analyzedat[["id_study"]]))` to `r max(table(analyzedat[["id_study"]]))`, with most reporting `r names(table(table(analyzedat$id_study)))[which.max(table(table(analyzedat$id_study)))]`
-effect size).
+## bla
+
+Moreover, we set
+out to code a comprehensive list of moderators, pertaining to publication characteristics, sample, study design,
+
+
+## Methods
+
+Preliminary search (Web of Science): 4991 records, 92 included
+
+Full search, based on meta-data from 92 articles:
+
+* Web of Science
+* PsychInfo
+* ERIC
+
+Additional 2194 relevant records, 52 new articles
+
+Total articles: 144, of which `r max(analyzedat$id_study)` reported sufficient statistical information to compute a total of `r nrow(analyzedat)` effect sizes.
+
+## Dataset
+
+Observed effect sizes ranged from `r nicetext(range(analyzedat[["es_correlation"]])[1])` to `r nicetext(range(analyzedat[["es_correlation"]])[2])`  
+$M_r = `r nicetext(mean(analyzedat[["es_correlation"]]))`$, $SD = `r nicetext(sd(analyzedat[["es_correlation"]]))`$
+
+Sample sizes ranged from `r min(analyzedat[["es_n"]])` to `r max(analyzedat[["es_n"]])`  
+$M_n = `r nicetext(mean(analyzedat[["es_n"]]))`$, $SD = `r nicetext(sd(analyzedat[["es_n"]]))`$
+
+Several studies reported multiple effect sizes (`r min(table(analyzedat[["id_study"]]))` to `r max(table(analyzedat[["id_study"]]))`
 
 
 ## Standard meta-analysis
 
 ```{r metafor_analysis, include=FALSE}
-if(FALSE){
-  effect_sizes <- escalc(ri = analyzedat$es_correlation, ni = analyzedat$es_n, measure = "COR")
-  
-  analyzedat <- analyzedat[, -match(c("es_correlation", "es_n"), names(analyzedat))]
-  analyzedat$yi <- as.numeric(effect_sizes$yi)
-  analyzedat$vi <- as.numeric(effect_sizes$vi)
-  
+if(run_metafor){
   #Conduct meta-analyses
   model.full <- rma.mv(yi, vi, random = list(~ 1 | id_study, ~ 1 | id_row), data=analyzedat) 
   model.within_null <- rma.mv(yi, vi, random = list(~ 1 | id_study, ~ 1 | id_row), sigma2=c(NA,0), data=analyzedat) 
@@ -75,48 +242,312 @@ if(FALSE){
   aov_table[1, 5:6] <-""
   write.csv(aov_table, "table_variance_components.csv")
   confints <- confint(model.full)
-  save(model.full, aov_table, confints, analyzedat, file = "metafor_results.RData")
+  save(model.full, aov_table, confints, file = "metafor_results.RData")
+  # Check convergence of variance components:
+  #par(mfrow=c(2,1))
+  #plot.profile1 <- profile(model.full, sigma2=1)
+  #plot.profile2 <- profile(model.full, sigma2=2)
+} else {
+  load("metafor_results.RData")
+  i2s <- calc_i2(model.full)
 }
-load("metafor_results.RData")
-#CHeck convergence of variance components:
-#par(mfrow=c(2,1))
-#plot.profile1 <- profile(model.full, sigma2=1)
-#plot.profile2 <- profile(model.full, sigma2=2)
 
-#Write forest plot to file
-#png(file="forest_plot.png",width=210,height=297, units="mm", res = 300)
-#forest(model.full, xlim = c(-5.5,4), alim = c(-1, 2), xlab="Effect size (Cohen's d)", mlab="Overall estimate: ", slab = data$study, ilab=data$outcomedv,
-#       ilab.xpos=c(-2), ilab.pos = c(4), cex = 0.75)
-#par(cex=0.75, font=2)
-#text(c(-5.5, -2.01, 2.54), 58, c("Study", "Outcome", "Cohen's d"), pos = 4)
-#dev.off()
-
-#library(extrafont)
-#loadfonts()
-#cairo_pdf("forest_plot.pdf", family="Helvetica", width = 8.27,height = 11.69)
-#forest(model.full, xlim = c(-5.5,4), alim = c(-1, 2), xlab="Effect size (Cohen's d)", mlab="Overall estimate: ", slab = data$study, ilab=data$outcomedv, ilab.xpos=c(-2), ilab.pos = c(4,4,4), cex = 0.75)
-#par(cex=0.75, font=2)
-#text(c(-5.5, -2.01, 2.54), 58, c("Study", "Outcome", "Cohen's d"), pos = c(4,4,4))
-#dev.off()
-#embed_fonts("forest_plot.pdf", outfile="forest_plot.pdf")
 
 ```
 
-```{r publication_bias, echo=FALSE, include=FALSE}
+Multilevel meta-analysis for dependent effect sizes (Van den Noortgate et al., 2013)
 
-beggs <- regtest(x = analyzedat$yi, vi = analyzedat$vi, predictor = "vi")
-beggs
+**Overall effect size:**
 
+$\hat{\rho} = `r nicetext(model.full[["b"]][1])`$, 95\% CI [`r nicetext(model.full[["ci.lb"]])`, `r nicetext(model.full[["ci.ub"]])`]
+
+**Tests for residual heterogeneity**
+
+* $Q(`r nrow(analyzedat)-1`) = `r nicetext(model.full[["QE"]])`, p = `r nicetext(model.full[["QEp"]])`$
+* Total $I^2 = `r paste0(nicetext(i2s[1]), "\\%")`$
+* Between studies: $I^2_b = `r paste0(nicetext(i2s[2]), "\\%")`$
+* Within studies: $I^2_w = `r paste0(nicetext(i2s[3]), "\\%")`$
+
+## Publication bias
+
+```{r pub_bias, fig.align='center', warning = FALSE} 
+beggs <- regtest(x = analyzedat$yi, vi = analyzedat$vi)
 
 #file drawer analysis (fail and safe)
-fsn <- fsn(yi = analyzedat$yi, vi = analyzedat$vi, 
-           #data = , 
-           #subset = c(domain, hit2Grouped), 
-           )
+filedrawer <- fsn(yi = analyzedat$yi, vi = analyzedat$vi)
+
+funnel_plotlyfi(model.full, authors)
+
 ```
 
-## Slide with Bullets
+Funnel plot asymmetry test: $z = `r nicetext(beggs[["zval"]])`, p = `r nicetext(beggs[["pval"]])`$
 
-```{r funnel_plot, echo=FALSE, fig.cap="A caption", out.width = '100%'}
-funnel(model.full, xlab = "Residual Value", back = "white") #funnel plot for qualitative evaluation publication bias
+File drawer analysis: $K = `r filedrawer[["fsnum"]]`$
+
+# Moderator analyses
+
+## Recursive pre-selection
+
+**Problem:** Large number of potential moderators (60)
+
+**Solution:** Recursive pre-selection; 100 replications
+
+Algorithm:
+
+1. Start with all moderators
+2. Conduct random-effects metaforest, with 2000 trees
+3. **If** no moderators have negative importance values, or only one moderator, return the resulting model
+4. **Else**, drop the variable with most negative variable importance, go back to Step 2
+
+Retained moderators selected in 30\\%+ of replications
+
+
+## Recursive pre-selection results
+
+```{r recursive_metaforest, include = FALSE}
+if(run_recursive_metaforest) {
+  moderators <-
+  c(
+  "sc_pub_year",
+  "sc_impact_factor_that_year",
+  "sa_data_year",
+  "sa_began_finished",
+  "sa_age_m_iv",
+  "sa_age_m_dv",
+  "sa_p_male",
+  "sa_age_m_f",
+  "sa_p_single_parent",
+  "sa_country",
+  "sa_p_hispanic_f",
+  "sa_p_black_f",
+  "sa_p_asian_f",
+  "sa_p_otherethnic_f",
+  "sa_p_low_ses_family",
+  "sa_p_bilingual",
+  "sa_pop_dens",
+  "sa_p_bio",
+  "sa_p_intact",
+  "sa_p_firstborn",
+  "de_longitudinal",
+  "de_larger_study",
+  "iv_qualitative",
+  "iv_assessment",
+  "iv_location",
+  "iv_informant",
+  "iv_reliability",
+  "iv_validity",
+  "dv_type",
+  "dv_assessment",
+  "dv_location",
+  "dv_informant",
+  "dv_timelag",
+  "dv_reliability",
+  "dv_validity",
+  "es_reverse_coded",
+  "es_type",
+  "es_partial",
+  "es_controls",
+  "iv_type_cat",
+  "dv_instrumentname_cat",
+  "sa_larger_study_cat"
+  )
+  
+  mfdat <- analyzedat[, c("id_study", "yi", "vi", moderators)]
+  
+  replications <- 100
+  
+  #Save seeds
+  set.seed(3436)
+  seeds <- round(runif(replications, 0, 10000000))
+  while (length(unique(seeds)) < replications) {
+    addseeds <- replications - length(unique(seeds))
+    seeds <- c(unique(seeds), round(runif(addseeds, 0, 10000000)))
+  }
+  
+  
+  recursive_mf <- function(modvars) {
+    mf_tmp <-
+      ClusterMF(
+        as.formula(paste0("yi ~ ", paste(modvars, collapse = " + "))),
+        data = mfdat,
+        study = "id_study",
+        whichweights = "random",
+        num.trees = 2000
+      )
+    if ((!any(mf_tmp$forest$variable.importance < 0)) | (length(mf_tmp$forest$variable.importance) == 1)) {
+      return(mf_tmp)
+    } else {
+      recursive_mf(names(mf_tmp$forest$variable.importance)[-which(
+        mf_tmp$forest$variable.importance == min(mf_tmp$forest$variable.importance))]
+        )
+    }
+  }
+  
+  master_list <- lapply(seeds, function(rep) {
+    set.seed(rep)
+    recursive_mf(moderators)
+  })
+  
+  save(master_list, file = "recursive_mf_100_manual_preselection.RData")
+  
+  var_selected <- sapply(moderators, function(this_mod) {
+    sum(sapply(master_list, function(x) {
+      this_mod %in% names(x$forest$variable.importance)
+    }))
+  })
+  save(var_selected, file = "var_selected_100.RData")
+  
+  write.csv(data.frame(Variable = names(var_selected), Frequency = var_selected), "var_selected_100.csv", row.names = FALSE)
+  #load("var_selected_100.RData")
+  
+  moderators <- c(names(var_selected)[var_selected > 30], "id_study", "vi")
+  
+  # Run model tuning
+  X <- analyzedat[moderators]
+  set.seed(753) #set seeds to a random number
+
+  # Set up 10-fold grouped CV
+  fit_control <- trainControl(method = "cv", index = groupKFold(analyzedat$id_study, k = 10))
+  
+  # Set up a custom tuning grid for the three tuning parameters of MetaForest
+  rf_grid <- expand.grid(whichweights = c("random", "fixed", "unif"),
+                         mtry = c(2, 4, 6),
+                         min.node.size = c(2, 4, 6))
+  
+  # Train the model
+  cv.mf.cluster <- train(y = analyzedat$yi, x = X,#from x remove yi and each
+                         study = "id_study", method = ModelInfo_mf(),
+                         trControl = fit_control,
+                         tuneGrid = rf_grid, num.trees = 10000)
+  
+  save(cv.mf.cluster, file = "metaforest_preselected_100_output.RData")
+  write.csv(cv.mf.cluster[["results"]], "cv_mf_results.csv", row.names = FALSE)
+  
+  png("convergence.png", width = 720, height = 432, units = "px")
+  plot(cv.mf.cluster$finalModel)
+  dev.off()  
+
+  png("var_imp.png", width = 720, height = 432, units = "px")
+  VarImpPlot(cv.mf.cluster$finalModel)
+  dev.off()
+
+  plot_vars <- cv.mf.cluster$finalModel$forest$variable.importance[cv.mf.cluster$finalModel$forest$variable.importance > 0]
+  plot_vars <- names(plot_vars)[order(plot_vars, decreasing = TRUE)]
+
+  png("partial_dep_1.png", width = 720, height = 432, units = "px")
+  PartialDependence(cv.mf.cluster$finalModel, plot_vars[1:6])
+  dev.off()
+
+  png("partial_dep_2.png", width = 720, height = 432, units = "px")
+  PartialDependence(cv.mf.cluster$finalModel, plot_vars[7:length(plot_vars)])
+  dev.off()
+  
+} else {
+  cv.mf.cluster <- list()
+  cv.mf.cluster[["results"]] <- read.csv("cv_mf_results.csv")
+  var_selected <- read.csv("var_selected_100.csv")
+
+}
+
 ```
+```{r table_vars}
+table_mods <- unique(sapply(var_selected$Variable, substr, 1, 2))
+table_mods <- data.frame(Category = table_mods, 
+                           "Selected" = sapply(table_mods, function(x){
+                                          paste(
+                                            sapply(var_selected$Variable[grepl(paste0("^", x), var_selected$Variable) & var_selected$Frequency > 30], function(i){gsub("(^\\w{2}_|_)", " ", i)}), collapse = ",")
+  }),
+  "Dropped" = sapply(table_mods, function(x){
+                                          paste(
+                                            sapply(var_selected$Variable[grepl(paste0("^", x), var_selected$Variable) & var_selected$Frequency <= 30], function(i){gsub("(^\\w{2}_|_)", " ", i)}), collapse = ",")
+  })
+)
+
+kable(table_mods, row.names = FALSE) %>%
+  kable_styling(font_size = 18, bootstrap_options = c("striped", "hover"))
+```
+
+
+## Metaforest analysis
+
+Metaforest analysis  
+(["metaforest" R-package, Van Lissa, 2017](https://cran.r-project.org/package=metaforest))
+
+Dependent effect sizes: Clustered bootstrapping
+
+Unbiased prediction error: Two parallel forests (10.000 trees)<font size="2">  
+([Janitza, Celik, & Boulesteix, 2016](https://doi.org/10.1007/s11634-016-0276-4))</font>
+
+### Model tuning
+
+Finding the optimal analysis settings
+
+* 10-fold grouped cross-validation
+* Tuning grid: 
+    + Weights ("random", "fixed", "uniform"),
+    + Candidate variables (2, 4, 6)
+    + Min. node size = (2, 4, 6)
+* Select smallest RMSE
+
+Optimal model: uniform weights, 4 candidate variables, min node size 2
+
+## Results
+
+Cross-validated $R^2_{cv} = `r nicetext(cv.mf.cluster[["results"]][["Rsquared"]][which.min(cv.mf.cluster[["results"]][["RMSE"]])])`$
+
+Clear evidence of model convergence:
+
+![](convergence.png)
+
+
+## Variable importance
+
+Variable importance reflects contribution to predictions
+
+Encompasses main effects/interactions/non-linear effects
+
+Variables ranked from most to least important
+
+## Variable importance
+
+![](var_imp.png)
+
+
+## Bivariate marginal associations
+
+Bivariate marginal associations show the "main effect" of each variable
+
+Averaging over the values of all other predictors
+
+## Bivariate marginal associations 1/2
+
+![](partial_dep_1.png)
+
+## Bivariate marginal associations 2/2
+
+![](partial_dep_2.png)
+
+## Conclusions
+
+**Substantive**
+
+* Stronger effects for **generative-** than **receptive** language
+
+**Methodological**
+
+* Stronger effects for research at home (ecological validity?)
+* Stronger effects for assessments/observations than questionnaires
+* Stronger effects for trained researchers than for parent/self-reports
+
+**Statistical**
+
+* Stronger effects for cross-sectional than longitudinal research (dissipation over time)
+* High dropout rate: Higher effect size (selection effect)
+* Partial correlations tend to be stronger, especially with more controls
+
+
+## Implications for adolescence
+
+Fathers continue to be relevant
+
+Instead of language development, examine cognitive development
