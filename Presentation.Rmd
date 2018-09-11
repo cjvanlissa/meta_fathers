@@ -21,13 +21,14 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs", output_file = "index.html") })    
 
 output:
-  ioslides_presentation:
+  ioslides_presentation: 
+    css: https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css
     transition: slower
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-
+options("kableExtra.html.bsTable" = TRUE)
 #author: 
 #- Caspar J. van Lissa
 #- Nicole Lucassen
@@ -168,43 +169,81 @@ funnel_plotlyfi <- function(x, labels = NULL) {
 
 ## Introduction
 
-Fathers play unique role in children's language development<font size="2">  
+Interactions with caregivers drive children's language development<font size="2">  
+([Pancsofar & Vernon-Feagans, 2006](https://doi.org/10.1016/j.appdev.2006.08.003))</font>
+
+Fathers play unique role<font size="2">  
 ([Cabrera & Tamis-LeMonda, 2013](https://books.google.nl/books?hl=en&lr=&id=Xx-abFyPtg8C&oi=fnd&pg=PR1&dq=Cabrera+%26+Tamis-LeMonda,+2013&ots=3migj0STnv&sig=Apy1_13WSyQMw2J0plIdlzlLmuY#v=onepage&q=Cabrera%20%26%20Tamis-LeMonda%2C%202013&f=false); [Varghese & Wachen, 2016](https://doi.org/10.1080/01494929.2015.1099587))</font>
 
-They use more varied/challenging language than mothers<font size="2">  
+* Through relationship with the mother
+* Indirectly, providing resources
+* *Directly, through interactions with children*
+
+## Direct involvement
+
+Fathers use more varied/challenging language than mothers<font size="2">  
 ([Tamis-LeMonda, Baumwell, & Cristofaro, 2012](https://doi.org/10.1177/0142723711419321))</font>
 
-This expands children's vocabulary<font size="2">  
-([Pancsofar & Vernon-Feagans, 2010](https://doi.org/10.1016/j.ecresq.2010.02.001); [Rowe, Coker, & Pan, 2004](https://doi.org/10.1111/j.1467-9507.2004.000267.x))</font>
+* More clarification requests ("wh- questions")<font size="2">  
+([Rowe et al., 2004](https://doi.org/10.1111/j.1467-9507.2004.000267.x))</font>
+* Do not adjust conversation topic to child<font size="2">  
+([Abkarian et al., 2003](http://www.mensstudies.info/OJS/index.php/FATHERING/article/download/185/pdf_1))</font>
 
-Latest meta-analysis covered studies until 2008<font size="2">  
+This expands children's vocabulary (zone of proximal development)<font size="2">  
+([Pancsofar & Vernon-Feagans, 2010](https://doi.org/10.1016/j.ecresq.2010.02.001))</font>
+
+## Previous meta-analysis
+
+Correlation between fathers' direct involvement and children's language outcomes
+
+* Previous meta-analysis covered studies until 2008<font size="2">  
 ([McWayne, Downer, Campos, & Harris, 2013](https://doi.org/10.1080/10409289.2013.746932))</font>
+* Average correlation: .08 (5 effect sizes)
 
-* Average correlation of .08 (5 effect sizes)
+**Recently: burgeoning interest in fatherhood!**
 
-Recently: burgeoning interest in fatherhood
+Time to update this estimate
 
-Time to update this estimate!
+## Moderators
 
-## bla
+Meta-analysis intended to summarize highly similar studies
 
-Moreover, we set
-out to code a comprehensive list of moderators, pertaining to publication characteristics, sample, study design,
+Often (ab?)used to summarize diverse bodies of research
+
+Differences between studies can be coded as moderators
+
+Problem with classic meta-regression:
+
+* Lacks power to identify relevant moderators
+* Overfitting
+* Forget about including interactions!
+
+## Metaforest
+
+Machine-learning based technique to identify relevant moderators
+
+High power with as few as 20 studies
+
+Controls overfitting
+
+Accounts for interactions and non-linear effects
+
+[Van Lissa, 2017](https://osf.io/khjgb/)
 
 
 ## Methods
 
-Preliminary search (Web of Science): 4991 records, 92 included
-
-Full search, based on meta-data from 92 articles:
+Electronic databases:
 
 * Web of Science
 * PsychInfo
 * ERIC
 
-Additional 2194 relevant records, 52 new articles
+Articles screened: 7185
 
-Total articles: 144, of which `r max(analyzedat$id_study)` reported sufficient statistical information to compute a total of `r nrow(analyzedat)` effect sizes.
+Relevant articles: 144
+
+Of these, `r max(analyzedat$id_study)` reported a total of `r nrow(analyzedat)` correlation coefficients
 
 ## Dataset
 
@@ -255,7 +294,8 @@ if(run_metafor){
 
 ```
 
-Multilevel meta-analysis for dependent effect sizes (Van den Noortgate et al., 2013)
+Multilevel meta-analysis for dependent effect sizes<font size="2">  
+([Van den Noortgate et al., 2013]())</font>
 
 **Overall effect size:**
 
@@ -296,10 +336,10 @@ Algorithm:
 
 1. Start with all moderators
 2. Conduct random-effects metaforest, with 2000 trees
-3. **If** no moderators have negative importance values, or only one moderator, return the resulting model
-4. **Else**, drop the variable with most negative variable importance, go back to Step 2
+3. **If** no moderators have negative importance values, or only one moderator, return the resulting model  
+   **Else**, drop the variable with most negative variable importance, go back to Step 2
 
-Retained moderators selected in 30\\%+ of replications
+Retained moderators selected in 30\%+ of replications
 
 
 ## Recursive pre-selection results
@@ -463,31 +503,33 @@ table_mods <- data.frame(Category = table_mods,
   })
 )
 
-kable(table_mods, row.names = FALSE) %>%
-  kable_styling(font_size = 18, bootstrap_options = c("striped", "hover"))
+row.names(table_mods) <- NULL
+table_mods %>%
+  knitr::kable(format = "html") %>%
+  kable_styling("striped", font_size = 18)#font_size = 18, 
 ```
 
 
 ## Metaforest analysis
 
 Metaforest analysis  
-(["metaforest" R-package, Van Lissa, 2017](https://cran.r-project.org/package=metaforest))
+([R-package by Van Lissa, 2017](https://cran.r-project.org/package=metaforest))
 
 Dependent effect sizes: Clustered bootstrapping
 
 Unbiased prediction error: Two parallel forests (10.000 trees)<font size="2">  
 ([Janitza, Celik, & Boulesteix, 2016](https://doi.org/10.1007/s11634-016-0276-4))</font>
 
-### Model tuning
+## Model tuning
 
-Finding the optimal analysis settings
+Finding optimal analysis settings
 
-* 10-fold grouped cross-validation
-* Tuning grid: 
+* 10-fold (clustered) cross-validation
+* Settings considered:
     + Weights ("random", "fixed", "uniform"),
     + Candidate variables (2, 4, 6)
     + Min. node size = (2, 4, 6)
-* Select smallest RMSE
+* Select model with smallest prediction error (RMSE)
 
 Optimal model: uniform weights, 4 candidate variables, min node size 2
 
@@ -502,24 +544,15 @@ Clear evidence of model convergence:
 
 ## Variable importance
 
-Variable importance reflects contribution to predictions
-
-Encompasses main effects/interactions/non-linear effects
-
-Variables ranked from most to least important
-
-## Variable importance
+Contribution to predictive performance; encompasses interactions/non-linear effects
 
 ![](var_imp.png)
 
 
-## Bivariate marginal associations
-
-Bivariate marginal associations show the "main effect" of each variable
-
-Averaging over the values of all other predictors
 
 ## Bivariate marginal associations 1/2
+
+"Main effects", averaging over all other predictors
 
 ![](partial_dep_1.png)
 
@@ -529,25 +562,39 @@ Averaging over the values of all other predictors
 
 ## Conclusions
 
-**Substantive**
+<font size="4">**Substantive**
 
+* Association might be stronger than thought before (.11 vs .08)
+* Which aspects of children's language do fathers influence?<font size="2">  
+([Cabrera & Tamis-LeMonda, 2013](https://books.google.nl/books?hl=en&lr=&id=Xx-abFyPtg8C&oi=fnd&pg=PR1&dq=Cabrera+%26+Tamis-LeMonda,+2013&ots=3migj0STnv&sig=Apy1_13WSyQMw2J0plIdlzlLmuY#v=onepage&q=Cabrera%20%26%20Tamis-LeMonda%2C%202013&f=false))</font>
 * Stronger effects for **generative-** than **receptive** language
 
 **Methodological**
 
-* Stronger effects for research at home (ecological validity?)
-* Stronger effects for assessments/observations than questionnaires
-* Stronger effects for trained researchers than for parent/self-reports
+* Research at home > Lab/school (ecological validity?)
+* Assessments/observations > questionnaires
+* Trained researchers > parent/self-reports
 
 **Statistical**
 
-* Stronger effects for cross-sectional than longitudinal research (dissipation over time)
+* Cross-sectional > longitudinal (dissipation over time)
 * High dropout rate: Higher effect size (selection effect)
-* Partial correlations tend to be stronger, especially with more controls
-
+* Partial correlations tend to be stronger (phacking?)
+</font>
 
 ## Implications for adolescence
 
-Fathers continue to be relevant
+Fathers continue to be relevant, outcome variables change
 
-Instead of language development, examine cognitive development
+E.g., father involvement associated with adolescents' academic achievement<font size="2">  
+([Meta-analysis by Jeynes, 2014](http://sci-hub.tw/10.1177/0042085914525789))</font>
+
+Important to account for moderators in meta-analysis
+
+MetaForest is a powerful technique to explore between-study heterogeneity
+
+## Further information
+
+All data and syntax on [https://osf.io/dz39y/](https://osf.io/dz39y/)
+
+This presentation live at [https://cjvanlissa.github.io/meta_fathers](https://cjvanlissa.github.io/meta_fathers)

@@ -13,7 +13,7 @@ r_from_means <- function(m1, m2, n1, n2, sd1, sd2){
 }
 
 set.seed(232)
-data <- read.csv("Copy of 06-09-18_final_dataset2.csv", stringsAsFactors = FALSE)
+data <- read.csv("data.csv", stringsAsFactors = FALSE)
 
 # Drop empty columns added by Excel
 rm_cols <- sapply(data, function(x){sum(is.na(x)) == nrow(data)})
